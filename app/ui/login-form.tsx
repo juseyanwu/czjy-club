@@ -7,7 +7,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { Button } from 'antd';
+import { Button } from './button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -120,7 +120,7 @@ export default function LoginForm() {
           </div>
         )}
         
-        <Button type='primary' className="mt-10 w-full" disabled={loading}>
+        <Button className="mt-10 w-full" disabled={loading}>
           {loading ? '登录中...' : '登录'} <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
       </div>

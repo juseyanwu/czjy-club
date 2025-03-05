@@ -8,7 +8,7 @@ import {
   UserIcon
 } from '@heroicons/react/24/outline';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
-import { Button } from 'antd';
+import { Button } from './button';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -182,7 +182,7 @@ export default function RegisterForm() {
           </div>
         )}
         
-        <Button type='primary' className="mt-4 w-full" disabled={loading}>
+        <Button className="mt-4 w-full" disabled={loading}>
           {loading ? '注册中...' : '注册'} <ArrowRightIcon className="ml-auto h-5 w-5 text-gray-50" />
         </Button>
       </div>
