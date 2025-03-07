@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { useState, useRef } from 'react';
@@ -19,6 +21,7 @@ export default function EventForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -29,23 +32,49 @@ export default function EventForm() {
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 处理图片上传
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      // 创建一个临时URL用于预览
-      const imageUrl = URL.createObjectURL(file);
-      setImagePreview(imageUrl);
+    if (!file) return;
+    
+    // 验证文件类型
+    if (!file.type.startsWith('image/')) {
+      setError('只允许上传图片文件');
+      return;
+    }
+    
+    try {
+      setUploading(true);
+      setError('');
       
-      // 在实际应用中，这里应该上传图片到服务器或云存储
-      // 这里我们简单地使用一个假URL，实际项目中应替换为真实的上传逻辑
-      // 例如使用FormData上传到服务器，或使用第三方服务如AWS S3, Cloudinary等
-      // 上传成功后获取返回的URL
-      const fakeUploadedUrl = imageUrl; // 实际项目中应替换为真实上传后的URL
+      // 创建FormData对象
+      const formData = new FormData();
+      formData.append('file', file);
       
+      // 调用上传API
+      const response = await fetch('/api/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || '上传图片失败');
+      }
+      
+      // 更新表单数据和预览
       setFormData(prev => ({
         ...prev,
-        image_url: fakeUploadedUrl
+        image_url: data.url
       }));
+      setImagePreview(data.url);
+      
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err.message || '上传图片过程中出现错误');
+    } finally {
+      setUploading(false);
     }
   };
   
@@ -187,37 +216,42 @@ export default function EventForm() {
       <div>
         <label
           className="mb-2 block text-sm font-medium text-gray-900"
+          htmlFor="image"
         >
           活动图片
         </label>
-        <div className="mt-1 flex items-center space-x-4">
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            ref={fileInputRef}
-            onChange={handleImageChange}
-          />
-          <button
-            type="button"
-            onClick={triggerFileInput}
-            className="flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <PhotoIcon className="mr-2 h-5 w-5 text-gray-500" />
-            选择图片
-          </button>
+        <div className="space-y-2">
+          <div className="flex items-center gap-4">
+            <label className="flex cursor-pointer items-center gap-2 rounded-md bg-blue-50 px-4 py-2 text-blue-600 hover:bg-blue-100">
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={uploading}
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              {uploading ? '上传中...' : '选择图片'}
+            </label>
+            {formData.image_url && (
+              <span className="text-sm text-green-600">图片已上传</span>
+            )}
+          </div>
+          
+          {/* 图片预览 */}
           {imagePreview && (
-            <div className="relative h-20 w-20 overflow-hidden rounded-md border border-gray-200">
-              <Image
+            <div className="relative h-40 w-full max-w-md overflow-hidden rounded-md border border-gray-200">
+              <img
                 src={imagePreview}
                 alt="活动图片预览"
-                fill
-                style={{ objectFit: 'cover' }}
+                className="h-full w-full object-cover"
               />
             </div>
           )}
         </div>
-        <p className="mt-1 text-xs text-gray-500">推荐上传16:9比例的图片，最大文件大小2MB</p>
       </div>
 
       {/* 错误信息显示 */}
