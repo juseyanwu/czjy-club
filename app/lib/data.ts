@@ -16,6 +16,7 @@ export async function fetchEvents() {
           events.date,
           events.location,
           events.description,
+          events.image_url,
           users.name as organizer_name,
           events.created_at
         FROM events

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from 'next/link';
 import { CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
@@ -38,17 +39,33 @@ export default async function EventsPage() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {events.map((event) => (
-              <div key={event.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
-                <div className="mb-2">
-                  <h3 className="text-lg font-medium text-blue-600">{event.title}</h3>
-                  <div className="flex justify-between text-sm text-gray-500 mt-1">
-                    <span>{new Date(event.date).toLocaleDateString('zh-CN')}</span>
-                    <span>组织者: {event.organizer_name}</span>
+              <div key={event.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                {/* 活动图片 */}
+                {event.image_url ? (
+                  <div className="relative h-48 w-full">
+                    <img
+                      src={event.image_url} 
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
                   </div>
-                </div>
-                <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description || '无描述'}</p>
-                <div className="flex items-center text-sm text-gray-600">
-                  <span className="flex-shrink-0">地点: {event.location}</span>
+                ) : (
+                  <div className="bg-gray-100 h-48 w-full flex items-center justify-center">
+                    <CalendarIcon className="h-12 w-12 text-gray-400" />
+                  </div>
+                )}
+                <div className="p-4">
+                  <div className="mb-2">
+                    <h3 className="text-lg font-medium text-blue-600">{event.title}</h3>
+                    <div className="flex justify-between text-sm text-gray-500 mt-1">
+                      <span>{new Date(event.date).toLocaleDateString('zh-CN')}</span>
+                      <span>组织者: {event.organizer_name}</span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{event.description || '无描述'}</p>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span className="flex-shrink-0">地点: {event.location}</span>
+                  </div>
                 </div>
               </div>
             ))}

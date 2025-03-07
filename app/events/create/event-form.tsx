@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Button } from '@/app/ui/button';
-import { CalendarIcon, MapPinIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
+import { CalendarIcon, MapPinIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/react/24/solid';
 
 export default function EventForm() {
@@ -11,8 +12,11 @@ export default function EventForm() {
     title: '',
     date: '',
     location: '',
-    description: ''
+    description: '',
+    image_url: ''
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -23,6 +27,30 @@ export default function EventForm() {
       ...prev,
       [name]: value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // 创建一个临时URL用于预览
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+      
+      // 在实际应用中，这里应该上传图片到服务器或云存储
+      // 这里我们简单地使用一个假URL，实际项目中应替换为真实的上传逻辑
+      // 例如使用FormData上传到服务器，或使用第三方服务如AWS S3, Cloudinary等
+      // 上传成功后获取返回的URL
+      const fakeUploadedUrl = imageUrl; // 实际项目中应替换为真实上传后的URL
+      
+      setFormData(prev => ({
+        ...prev,
+        image_url: fakeUploadedUrl
+      }));
+    }
+  };
+  
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -153,6 +181,43 @@ export default function EventForm() {
           />
           <DocumentTextIcon className="pointer-events-none absolute left-3 top-6 h-[18px] w-[18px] text-gray-500" />
         </div>
+      </div>
+
+      {/* 活动图片上传 */}
+      <div>
+        <label
+          className="mb-2 block text-sm font-medium text-gray-900"
+        >
+          活动图片
+        </label>
+        <div className="mt-1 flex items-center space-x-4">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            ref={fileInputRef}
+            onChange={handleImageChange}
+          />
+          <button
+            type="button"
+            onClick={triggerFileInput}
+            className="flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <PhotoIcon className="mr-2 h-5 w-5 text-gray-500" />
+            选择图片
+          </button>
+          {imagePreview && (
+            <div className="relative h-20 w-20 overflow-hidden rounded-md border border-gray-200">
+              <Image
+                src={imagePreview}
+                alt="活动图片预览"
+                fill
+                style={{ objectFit: 'cover' }}
+              />
+            </div>
+          )}
+        </div>
+        <p className="mt-1 text-xs text-gray-500">推荐上传16:9比例的图片，最大文件大小2MB</p>
       </div>
 
       {/* 错误信息显示 */}

@@ -14,6 +14,7 @@ export async function GET() {
         events.date,
         events.location,
         events.description,
+        events.image_url,
         users.name as organizer_name,
         events.created_at
       FROM events
@@ -35,7 +36,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     // 解析请求体
-    const { title, date, location, description, organizer_id } = await request.json();
+    const { title, date, location, description, image_url, organizer_id } = await request.json();
 
     // 验证请求数据
     if (!title || !date || !location || !organizer_id) {
@@ -47,9 +48,9 @@ export async function POST(request: Request) {
 
     // 创建活动
     const newEvent = await sql`
-      INSERT INTO events (title, date, location, description, organizer_id)
-      VALUES (${title}, ${date}, ${location}, ${description}, ${organizer_id})
-      RETURNING id, title, date, location, description, organizer_id, created_at
+      INSERT INTO events (title, date, location, description, image_url, organizer_id)
+      VALUES (${title}, ${date}, ${location}, ${description}, ${image_url}, ${organizer_id})
+      RETURNING id, title, date, location, description, image_url, organizer_id, created_at
     `;
 
     // 返回成功响应

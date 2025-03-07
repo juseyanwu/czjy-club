@@ -11,6 +11,7 @@ export type EventsTable = {
   date: string;
   location: string;
   description: string;
+  image_url?: string; // 活动图片URL
   organizer_name: string; // 组织者名称
   created_at: string;
 };
@@ -22,5 +23,6 @@ export type EventForm = {
   date: string;
   location: string;
   description: string;
+  image_url?: string; // 活动图片URL
   organizer_id: string;
 };
