@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import postgres from 'postgres';
 import bcryptjs from 'bcryptjs';
+import { generateToken } from '@/app/lib/auth';
+import { cookies } from 'next/headers';
 
 // 数据库连接
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
@@ -41,6 +43,26 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+        // 生成JWT令牌
+        const token = generateToken({
+          id: user.id,
+          name: user.name,
+          email: user.email
+        });
+        
+        // 设置cookie
+        (await
+          // 设置cookie
+          cookies()).set({
+          name: 'token',
+          value: token,
+          httpOnly: true,
+          path: '/',
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 7 * 24 * 60 * 60, // 7天
+          sameSite: 'strict'
+        });
 
     // 登录成功，返回用户信息（不包含密码）
     return NextResponse.json({
