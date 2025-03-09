@@ -2,12 +2,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/app/ui/button';
 import { CalendarIcon, MapPinIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/react/24/solid';
+import { getClientUser } from '@/app/lib/auth';
 
 export default function EventForm() {
   const [formData, setFormData] = useState({
@@ -23,7 +24,23 @@ export default function EventForm() {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<{id: string; name: string; email: string} | null>(null);
 
+    // 获取当前登录用户信息
+    useEffect(() => {
+      const fetchUser = async () => {
+        const user = await getClientUser();
+        if (!user) {
+          // 如果用户未登录，重定向到登录页面
+          router.push("/login");
+          return;
+        }
+        setCurrentUser(user);
+      };
+
+      fetchUser();
+    }, [router]);
+    
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -88,9 +105,14 @@ export default function EventForm() {
     setLoading(true);
 
     try {
-      // 获取当前登录用户ID，这里假设用户已登录
-      // 在实际应用中，应该从会话或认证状态中获取
-      const organizer_id = '410544b2-4001-4271-9855-fec4b6a6442a'; // 使用默认用户ID
+      // 检查用户是否已登录
+      if (!currentUser) {
+        setError('请先登录再创建活动');
+        setLoading(false);
+        return;
+      }
+      
+      const organizer_id = currentUser.id; // 使用当前登录用户的ID
 
       const response = await fetch('/api/events', {
         method: 'POST',
