@@ -52,7 +52,7 @@ export default function LoginForm() {
       }
 
       // 登录成功，跳转到仪表板
-      router.push('/dashboard');
+      router.push('/');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || '登录过程中出现错误');
