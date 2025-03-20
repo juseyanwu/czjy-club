@@ -4,6 +4,7 @@ import { CalendarIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { fetchEvents } from '@/app/lib/data';
 
+export const dynamic = 'force-dynamic'
 export default async function EventsPage() {
   // 从数据库获取活动列表
   const events = await fetchEvents();
