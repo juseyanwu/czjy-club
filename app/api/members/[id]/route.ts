@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 // 获取指定成员详情
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -27,7 +27,9 @@ export async function GET(
       );
     }
 
-    const id = context.params.id;
+    // 处理params可能是Promise的情况
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const id = resolvedParams.id;
     
     // 获取用户详情
     const user = await fetchUserById(id);
@@ -45,7 +47,7 @@ export async function GET(
 // 更新成员信息
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -65,7 +67,9 @@ export async function PUT(
       );
     }
 
-    const id = context.params.id;
+    // 处理params可能是Promise的情况
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const id = resolvedParams.id;
     const body = await request.json();
     const { name, email, password } = body;
 
@@ -133,7 +137,7 @@ export async function PUT(
 // 删除成员
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -153,7 +157,9 @@ export async function DELETE(
       );
     }
 
-    const id = context.params.id;
+    // 处理params可能是Promise的情况
+    const resolvedParams = params instanceof Promise ? await params : params;
+    const id = resolvedParams.id;
 
     // 验证用户是否存在
     const existingUser = await prisma.users.findUnique({

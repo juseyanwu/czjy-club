@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 获取任务评论列表
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -25,9 +25,12 @@ export async function GET(
       );
     }
     
+    // 处理params可能是Promise的情况
+    const resolvedParams = params instanceof Promise ? await params : params;
+    
     // 检查任务是否存在
     const task = await prisma.tasks.findUnique({
-      where: { id: context.params.id }
+      where: { id: resolvedParams.id }
     });
     
     if (!task) {
@@ -39,7 +42,7 @@ export async function GET(
     
     // 获取评论列表
     const comments = await prisma.task_comments.findMany({
-      where: { task_id: context.params.id },
+      where: { task_id: resolvedParams.id },
       include: {
         user: {
           select: {
@@ -75,7 +78,7 @@ export async function GET(
 // 添加任务评论
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -95,9 +98,12 @@ export async function POST(
       );
     }
     
+    // 处理params可能是Promise的情况
+    const resolvedParams = params instanceof Promise ? await params : params;
+    
     // 检查任务是否存在
     const task = await prisma.tasks.findUnique({
-      where: { id: context.params.id }
+      where: { id: resolvedParams.id }
     });
     
     if (!task) {
@@ -121,7 +127,7 @@ export async function POST(
     // 创建评论
     const comment = await prisma.task_comments.create({
       data: {
-        task_id: context.params.id,
+        task_id: resolvedParams.id,
         user_id: currentUser.id,
         content: content.trim()
       },
