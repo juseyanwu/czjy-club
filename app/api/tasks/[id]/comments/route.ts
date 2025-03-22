@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 获取任务评论列表
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -27,7 +27,7 @@ export async function GET(
     
     // 检查任务是否存在
     const task = await prisma.tasks.findUnique({
-      where: { id: params.id }
+      where: { id: context.params.id }
     });
     
     if (!task) {
@@ -37,15 +37,19 @@ export async function GET(
       );
     }
     
-    // 获取任务评论
+    // 获取评论列表
     const comments = await prisma.task_comments.findMany({
-      where: { task_id: params.id },
+      where: { task_id: context.params.id },
       include: {
         user: {
-          select: { id: true, name: true }
+          select: {
+            name: true
+          }
         }
       },
-      orderBy: { created_at: 'asc' }
+      orderBy: {
+        created_at: 'desc'
+      }
     });
     
     // 格式化评论数据
@@ -71,7 +75,7 @@ export async function GET(
 // 添加任务评论
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -93,7 +97,7 @@ export async function POST(
     
     // 检查任务是否存在
     const task = await prisma.tasks.findUnique({
-      where: { id: params.id }
+      where: { id: context.params.id }
     });
     
     if (!task) {
@@ -117,7 +121,7 @@ export async function POST(
     // 创建评论
     const comment = await prisma.task_comments.create({
       data: {
-        task_id: params.id,
+        task_id: context.params.id,
         user_id: currentUser.id,
         content: content.trim()
       },

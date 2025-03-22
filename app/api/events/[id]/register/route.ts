@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 用户报名参加活动
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -25,7 +25,7 @@ export async function POST(
       );
     }
 
-    const eventId = params.id;
+    const eventId = context.params.id;
     
     // 检查活动是否存在
     const event = await prisma.events.findUnique({
@@ -82,7 +82,7 @@ export async function POST(
 // 取消报名
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -102,7 +102,7 @@ export async function DELETE(
       );
     }
     
-    const eventId = params.id;
+    const eventId = context.params.id;
     
     // 检查报名记录是否存在
     const registration = await prisma.event_registrations.findUnique({

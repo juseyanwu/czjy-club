@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 获取单个任务详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -27,7 +27,7 @@ export async function GET(
     
     // 查询任务
     const task = await prisma.tasks.findUnique({
-      where: { id: params.id },
+      where: { id: context.params.id },
       include: {
         creator: {
           select: { id: true, name: true, email: true }
@@ -110,7 +110,7 @@ export async function GET(
 // 更新任务
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -130,7 +130,7 @@ export async function PUT(
       );
     }
     
-    const taskId = params.id;
+    const taskId = context.params.id;
     
     // 查询现有任务
     const existingTask = await prisma.tasks.findUnique({
@@ -260,7 +260,7 @@ export async function PUT(
 // 删除任务
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
     // 验证用户是否已登录
@@ -280,31 +280,38 @@ export async function DELETE(
       );
     }
     
-    // 只有管理员和任务创建者可以删除任务
-    if (currentUser.role !== 'admin') {
-      const task = await prisma.tasks.findUnique({
-        where: { id: params.id },
-        select: { creator_id: true }
-      });
-      
-      if (!task) {
-        return NextResponse.json(
-          { error: '任务不存在' },
-          { status: 404 }
-        );
+    // 检查任务是否存在
+    const task = await prisma.tasks.findUnique({
+      where: { id: context.params.id },
+      include: {
+        creator: true,
+        comments: true
       }
-      
-      if (task.creator_id !== currentUser.id) {
-        return NextResponse.json(
-          { error: '您没有权限删除此任务' },
-          { status: 403 }
-        );
-      }
+    });
+    
+    if (!task) {
+      return NextResponse.json(
+        { error: '任务不存在' },
+        { status: 404 }
+      );
     }
     
-    // 删除任务（级联删除评论和日志）
+    // 检查权限：只有管理员或任务创建者可以删除任务
+    if (currentUser.role !== 'admin' && task.creator_id !== currentUser.id) {
+      return NextResponse.json(
+        { error: '没有权限删除该任务' },
+        { status: 403 }
+      );
+    }
+    
+    // 删除任务关联的评论
+    await prisma.task_comments.deleteMany({
+      where: { task_id: context.params.id }
+    });
+    
+    // 删除任务
     await prisma.tasks.delete({
-      where: { id: params.id }
+      where: { id: context.params.id }
     });
     
     return NextResponse.json({
