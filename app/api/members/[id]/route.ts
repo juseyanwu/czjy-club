@@ -7,7 +7,7 @@ import bcrypt from 'bcryptjs';
 // 获取指定成员详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -27,8 +27,8 @@ export async function GET(
       );
     }
 
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const id = resolvedParams.id;
     
     // 获取用户详情
@@ -47,7 +47,7 @@ export async function GET(
 // 更新成员信息
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -67,8 +67,8 @@ export async function PUT(
       );
     }
 
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const id = resolvedParams.id;
     const body = await request.json();
     const { name, email, password } = body;
@@ -137,7 +137,7 @@ export async function PUT(
 // 删除成员
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -157,8 +157,8 @@ export async function DELETE(
       );
     }
 
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const id = resolvedParams.id;
 
     // 验证用户是否存在

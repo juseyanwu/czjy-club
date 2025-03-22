@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 获取单个任务详情
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -25,12 +25,13 @@ export async function GET(
       );
     }
     
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
+    const taskId = resolvedParams.id;
     
     // 查询任务
     const task = await prisma.tasks.findUnique({
-      where: { id: resolvedParams.id },
+      where: { id: taskId },
       include: {
         creator: {
           select: { id: true, name: true, email: true }
@@ -113,7 +114,7 @@ export async function GET(
 // 更新任务
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -133,8 +134,8 @@ export async function PUT(
       );
     }
     
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const taskId = resolvedParams.id;
     
     // 查询现有任务
@@ -265,7 +266,7 @@ export async function PUT(
 // 删除任务
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -285,12 +286,13 @@ export async function DELETE(
       );
     }
     
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
+    const taskId = resolvedParams.id;
     
     // 检查任务是否存在
     const task = await prisma.tasks.findUnique({
-      where: { id: resolvedParams.id },
+      where: { id: taskId },
       include: {
         creator: true,
         comments: true
@@ -314,12 +316,12 @@ export async function DELETE(
     
     // 删除任务关联的评论
     await prisma.task_comments.deleteMany({
-      where: { task_id: resolvedParams.id }
+      where: { task_id: taskId }
     });
     
     // 删除任务
     await prisma.tasks.delete({
-      where: { id: resolvedParams.id }
+      where: { id: taskId }
     });
     
     return NextResponse.json({

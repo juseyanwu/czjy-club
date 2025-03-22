@@ -5,7 +5,7 @@ import { verifyToken } from '@/app/lib/auth';
 // 用户报名参加活动
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -25,8 +25,8 @@ export async function POST(
       );
     }
 
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const eventId = resolvedParams.id;
     
     // 检查活动是否存在
@@ -84,7 +84,7 @@ export async function POST(
 // 取消报名
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户是否已登录
@@ -104,8 +104,8 @@ export async function DELETE(
       );
     }
     
-    // 处理params可能是Promise的情况
-    const resolvedParams = params instanceof Promise ? await params : params;
+    // 解析参数
+    const resolvedParams = await params;
     const eventId = resolvedParams.id;
     
     // 检查报名记录是否存在
