@@ -22,10 +22,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
-    },
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "noImplicitAny": false,
-    "skipDefaultLibCheck": true
+    }
   },
   "include": [
     "next-env.d.ts",
@@ -33,8 +30,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/lib/placeholder-data.ts",
-    "scripts/seed.js",
-    "types/**/*.d.ts"
+    "scripts/seed.js"
   ],
   "exclude": ["node_modules"]
 }
