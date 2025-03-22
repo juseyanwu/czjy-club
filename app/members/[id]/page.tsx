@@ -11,13 +11,10 @@ import {
   ArrowLeftIcon, 
   PencilIcon, 
   XMarkIcon, 
-  CheckIcon, 
-  TrashIcon, 
-  ExclamationTriangleIcon 
+  CheckIcon
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { getClientUser } from '@/app/lib/auth';
-import Loading from '@/app/ui/loading';
 
 // 用户详情接口
 interface UserDetail {

@@ -10,8 +10,6 @@ import {
   MagnifyingGlassIcon,
   EnvelopeIcon,
   CalendarIcon,
-  PencilIcon,
-  TrashIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
