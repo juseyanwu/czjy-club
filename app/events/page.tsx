@@ -174,7 +174,7 @@ export default function EventsPage() {
         const data = await response.json();
         
         // 确保数据符合本页面的Event接口
-        const formattedEvents = data.events.map((event: any) => ({
+        const formattedEvents: Event[] = data.events.map((event: Record<string, unknown>) => ({
           ...event,
           is_registered: false,
           registration_count: 0
@@ -229,9 +229,10 @@ export default function EventsPage() {
       
       setNotification('报名成功！');
       setTimeout(() => setNotification(''), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('报名失败:', error);
-      setNotification(`报名失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      setNotification(`报名失败: ${errorMessage}`);
       setTimeout(() => setNotification(''), 3000);
     }
   };
@@ -262,9 +263,10 @@ export default function EventsPage() {
       
       setNotification('已取消报名');
       setTimeout(() => setNotification(''), 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('取消报名失败:', error);
-      setNotification(`取消报名失败: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      setNotification(`取消报名失败: ${errorMessage}`);
       setTimeout(() => setNotification(''), 3000);
     }
   };

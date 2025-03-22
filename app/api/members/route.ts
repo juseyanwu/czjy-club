@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 清除敏感信息
-    const { password: _, ...userWithoutPassword } = newUser;
+    const { password: _password, ...userWithoutPassword } = newUser;
 
     return NextResponse.json({
       user: userWithoutPassword,

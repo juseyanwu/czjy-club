@@ -3,7 +3,7 @@ import { prisma } from '@/app/lib/prisma';
 import { verifyToken } from '@/app/lib/auth';
 
 // 获取活动列表
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     const events = await prisma.events.findMany({
       include: {

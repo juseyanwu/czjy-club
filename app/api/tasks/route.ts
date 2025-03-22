@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { verifyToken } from '@/app/lib/auth';
+import { Prisma } from '@prisma/client';
 
 // 获取任务列表
 export async function GET(request: NextRequest) {
@@ -28,11 +29,11 @@ export async function GET(request: NextRequest) {
     const assignee = searchParams.get('assignee');
     
     // 构建查询条件
-    let whereClause: any = {};
+    const whereClause: Prisma.tasksWhereInput = {};
     
     // 根据任务状态筛选
     if (status) {
-      whereClause.status = status;
+      whereClause.status = status as Prisma.EnumTaskStatusFilter;
     }
     
     // 根据指派人筛选

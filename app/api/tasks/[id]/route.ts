@@ -161,7 +161,7 @@ export async function PUT(
     const { title, description, location, due_date, assignee_id, status } = await request.json();
     
     // 构建更新数据
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;

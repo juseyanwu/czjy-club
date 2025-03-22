@@ -1,21 +1,23 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
+  EnvelopeIcon, 
   UserIcon, 
-  EnvelopeIcon,
-  CalendarIcon,
-  ArrowLeftIcon,
-  PencilSquareIcon,
-  XMarkIcon,
-  CheckIcon,
+  CalendarIcon, 
+  ArrowLeftIcon, 
+  PencilIcon, 
+  XMarkIcon, 
+  CheckIcon, 
+  TrashIcon, 
+  ExclamationTriangleIcon 
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { getClientUser } from '@/app/lib/auth';
-import { Dialog, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
+import Loading from '@/app/ui/loading';
 
 // 用户详情接口
 interface UserDetail {
@@ -202,7 +204,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
                 onClick={() => setIsEditMode(true)}
                 className="flex items-center text-blue-600 hover:text-blue-800"
               >
-                <PencilSquareIcon className="w-4 h-4 mr-1" />
+                <PencilIcon className="w-4 h-4 mr-1" />
                 编辑
               </button>
               <Link

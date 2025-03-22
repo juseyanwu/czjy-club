@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   UserGroupIcon, 
@@ -21,7 +23,7 @@ function DashboardCard({
 }: { 
   title: string; 
   value: number | string; 
-  icon: any; 
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   bgColor: string; 
 }) {
   return (

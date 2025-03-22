@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { prisma } from './prisma';
 import { EventsTable } from './definitions';
 

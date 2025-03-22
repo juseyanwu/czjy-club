@@ -82,7 +82,7 @@ export async function PUT(
     }
 
     // 准备更新数据
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     
     if (name) updateData.name = name;
     
@@ -114,7 +114,7 @@ export async function PUT(
     });
 
     // 清除敏感信息
-    const { password: _, ...userWithoutPassword } = updatedUser;
+    const { password: _password, ...userWithoutPassword } = updatedUser;
 
     return NextResponse.json({
       user: userWithoutPassword,
