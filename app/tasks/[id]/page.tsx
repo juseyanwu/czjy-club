@@ -24,7 +24,8 @@ import { getClientUser } from '@/app/lib/auth';
 import { Task, TaskStatus, TaskComment, TaskLog } from '@/app/lib/definitions';
 import Loading from '@/app/ui/loading';
 
-export default function TaskDetailPage({ params }: { params: { id: string } }) {
+export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [taskId, setTaskId] = useState<string | null>(null);
   const [task, setTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,6 +39,21 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   const [selectedAssignee, setSelectedAssignee] = useState<string | undefined>(undefined);
   
   const router = useRouter();
+  
+  // 解析参数
+  useEffect(() => {
+    const resolveParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setTaskId(resolvedParams.id);
+      } catch (error) {
+        console.error('解析参数错误:', error);
+        setError('加载任务信息失败');
+      }
+    };
+    
+    resolveParams();
+  }, [params]);
   
   // 获取当前用户
   useEffect(() => {
@@ -56,9 +72,11 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   // 获取任务详情
   useEffect(() => {
     const fetchTaskDetail = async () => {
+      if (!taskId) return;
+      
       try {
         setLoading(true);
-        const response = await fetch(`/api/tasks/${params.id}`);
+        const response = await fetch(`/api/tasks/${taskId}`);
         if (!response.ok) {
           throw new Error('获取任务详情失败');
         }
@@ -72,10 +90,10 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
       }
     };
     
-    if (currentUser) {
+    if (currentUser && taskId) {
       fetchTaskDetail();
     }
-  }, [currentUser, params.id]);
+  }, [currentUser, taskId]);
   
   // 获取所有用户
   useEffect(() => {
@@ -99,14 +117,14 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   
   // 添加评论
   const handleAddComment = async () => {
-    if (!commentText.trim()) {
+    if (!taskId || !commentText.trim()) {
       setNotification('评论内容不能为空');
       setTimeout(() => setNotification(''), 3000);
       return;
     }
     
     try {
-      const response = await fetch(`/api/tasks/${params.id}/comments`, {
+      const response = await fetch(`/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -144,8 +162,10 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   
   // 更新任务状态
   const handleUpdateStatus = async (newStatus: TaskStatus) => {
+    if (!taskId) return;
+    
     try {
-      const response = await fetch(`/api/tasks/${params.id}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -186,8 +206,10 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   
   // 删除任务
   const handleDeleteTask = async () => {
+    if (!taskId) return;
+    
     try {
-      const response = await fetch(`/api/tasks/${params.id}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'DELETE'
       });
       
@@ -208,8 +230,10 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   
   // 更新任务指派人
   const handleUpdateAssignee = async () => {
+    if (!taskId) return;
+    
     try {
-      const response = await fetch(`/api/tasks/${params.id}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'
@@ -306,7 +330,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   // 辅助函数，用于刷新任务详情
   const fetchTaskDetail = async () => {
     try {
-      const response = await fetch(`/api/tasks/${params.id}`);
+      const response = await fetch(`/api/tasks/${taskId}`);
       if (!response.ok) {
         throw new Error('获取任务详情失败');
       }
