@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build --no-lint",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:with-env": "NEXT_SKIP_TYPE_CHECK=1 NEXT_IGNORE_TYPE_ERROR=1 next build --no-lint"
   },
   "dependencies": {
     "@headlessui/react": "1.7.17",
