@@ -4,7 +4,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { Button } from '@/app/ui/button';
 import { CalendarIcon, MapPinIcon, DocumentTextIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/react/24/solid';

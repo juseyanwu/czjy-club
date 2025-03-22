@@ -1,65 +1,53 @@
 import bcrypt from 'bcryptjs';
-import postgres from 'postgres';
 import { users } from '../lib/placeholder-data';
-
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+import { prisma } from '@/app/lib/prisma';
 
 async function seedUsers() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-  await sql`
-    CREATE TABLE IF NOT EXISTS users (
-      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL
-    );
-  `;
+  // 确保用户表存在
+  for (const user of users) {
+    // 检查用户是否已存在
+    const existingUser = await prisma.users.findUnique({
+      where: {
+        email: user.email,
+      }
+    });
 
-  const insertedUsers = await Promise.all(
-    users.map(async (user) => {
+    if (!existingUser) {
+      // 创建用户
       const hashedPassword = await bcrypt.hash(user.password, 10);
-      return sql`
-        INSERT INTO users (id, name, email, password)
-        VALUES (${user.id}, ${user.name}, ${user.email}, ${hashedPassword})
-        ON CONFLICT (id) DO NOTHING;
-      `;
-    }),
-  );
+      await prisma.users.create({
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          password: hashedPassword
+        }
+      });
+    }
+  }
 
-  return insertedUsers;
+  return users.length;
 }
 
-// 活动数据库初始化
+// 使用 Prisma 初始化活动表
 async function seedEvents() {
-  await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS events (
-      id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-      title VARCHAR(255) NOT NULL,
-      date DATE NOT NULL,
-      location VARCHAR(255) NOT NULL,
-      description TEXT,
-      image_url TEXT,
-      organizer_id UUID NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-  `;
-
-  return [];
+  // 由于Prisma会自动创建表，这里不需要额外创建表的操作
+  // 我们可以在这里添加示例活动数据
+  return 0;
 }
-
 
 export async function GET() {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const result = await sql.begin((sql) => [
-      seedUsers(),
-      seedEvents()
-    ]);
-
-    return Response.json({ message: 'Database seeded successfully' });
+    const usersCount = await seedUsers();
+    const eventsCount = await seedEvents();
+    
+    return Response.json({ 
+      message: 'Database seeded successfully',
+      usersCount,
+      eventsCount
+    });
   } catch (error) {
-    return Response.json({ error }, { status: 500 });
+    console.error('Seed error:', error);
+    return Response.json({ error: (error as Error).message }, { status: 500 });
   }
 }

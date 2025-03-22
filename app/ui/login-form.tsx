@@ -51,8 +51,8 @@ export default function LoginForm() {
         throw new Error(data.message || '登录失败');
       }
 
-      // 登录成功，跳转到仪表板
-      router.push('/');
+      // 登录成功，跳转到dashboard页面
+      router.push('/dashboard');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       setError(err.message || '登录过程中出现错误');

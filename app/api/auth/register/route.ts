@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
-import postgres from 'postgres';
 import bcryptjs from 'bcryptjs';
-
-// 数据库连接
-const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
+import { prisma } from '@/app/lib/prisma';
 
 export async function POST(request: Request) {
   try {
@@ -19,11 +16,13 @@ export async function POST(request: Request) {
     }
 
     // 检查邮箱是否已存在
-    const existingUser = await sql`
-      SELECT * FROM users WHERE email = ${email}
-    `;
+    const existingUser = await prisma.users.findUnique({
+      where: {
+        email
+      }
+    });
 
-    if (existingUser.length > 0) {
+    if (existingUser) {
       return NextResponse.json(
         { message: '该邮箱已被注册' },
         { status: 409 }
@@ -34,21 +33,30 @@ export async function POST(request: Request) {
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
 
+    // 检查是否是第一个用户（第一个用户设置为管理员）
+    const userCount = await prisma.users.count();
+    const isFirstUser = userCount === 0;
+
     // 创建用户
-    const newUser = await sql`
-      INSERT INTO users (name, email, password)
-      VALUES (${name}, ${email}, ${hashedPassword})
-      RETURNING id, name, email
-    `;
+    const newUser = await prisma.users.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: isFirstUser ? 'admin' : 'user', // 第一个注册的用户设为管理员，其他设为普通用户
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true
+      }
+    });
 
     // 返回成功响应（不包含密码）
     return NextResponse.json({
       message: '注册成功',
-      user: {
-        id: newUser[0].id,
-        name: newUser[0].name,
-        email: newUser[0].email
-      }
+      user: newUser
     }, { status: 201 });
 
   } catch (error) {

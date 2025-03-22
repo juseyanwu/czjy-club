@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model events {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title        String    @db.VarChar(255)
+  date         DateTime  @db.Date
+  location     String    @db.VarChar(255)
+  description  String?
+  organizer_id String    @db.Uuid
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  image_url    String?
+  
+  // 关联到用户表
+  organizer    users     @relation(fields: [organizer_id], references: [id])
+  // 报名关系
+  registrations event_registrations[]
+}
+
+// 任务状态枚举
+enum TaskStatus {
+  NOT_STARTED // 未开始
+  IN_PROGRESS // 进行中
+  COMPLETED   // 已完成
+}
+
+// 任务模型
+model tasks {
+  id          String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  title       String     @db.VarChar(255)
+  description String?
+  location    String?    @db.VarChar(255)
+  due_date    DateTime?  @db.Date
+  status      TaskStatus @default(NOT_STARTED)
+  created_at  DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime   @updatedAt @db.Timestamptz(6)
+  creator_id  String     @db.Uuid
+  assignee_id String?    @db.Uuid
+  
+  // 关联
+  creator     users      @relation("TaskCreator", fields: [creator_id], references: [id])
+  assignee    users?     @relation("TaskAssignee", fields: [assignee_id], references: [id])
+  comments    task_comments[]
+  logs        task_logs[]
+}
+
+// 任务评论模型
+model task_comments {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  task_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  content    String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  
+  // 关联
+  task       tasks    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user       users    @relation(fields: [user_id], references: [id])
+}
+
+// 任务日志模型，记录任务状态变更
+model task_logs {
+  id         String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  task_id    String     @db.Uuid
+  user_id    String     @db.Uuid
+  old_status TaskStatus?
+  new_status TaskStatus
+  message    String?
+  created_at DateTime   @default(now()) @db.Timestamptz(6)
+  
+  // 关联
+  task       tasks      @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user       users      @relation(fields: [user_id], references: [id])
+}
+
+model users {
+  id       String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name     String   @db.VarChar(255)
+  email    String   @unique
+  password String
+  role     String   @default("user") // 'admin' 或 'user'
+  
+  // 用户组织的活动
+  events   events[]
+  // 用户报名的活动
+  registrations event_registrations[]
+  
+  // 用户创建的任务
+  created_tasks tasks[] @relation("TaskCreator")
+  // 用户被指派的任务
+  assigned_tasks tasks[] @relation("TaskAssignee")
+  // 用户的任务评论
+  task_comments task_comments[]
+  // 用户的任务日志
+  task_logs task_logs[]
+}
+
+// 添加活动报名模型
+model event_registrations {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  event_id  String   @db.Uuid
+  user_id   String   @db.Uuid
+  status    String   @default("registered") // 'registered', 'attended', 'cancelled'
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  
+  // 关联
+  event     events   @relation(fields: [event_id], references: [id])
+  user      users    @relation(fields: [user_id], references: [id])
+  
+  // 联合唯一约束，确保一个用户不能重复报名同一个活动
+  @@unique([event_id, user_id])
+}

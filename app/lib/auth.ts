@@ -13,6 +13,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  role: string;
 };
 
 // 生成JWT令牌
@@ -22,6 +23,7 @@ export function generateToken(user: User): string {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
     },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
@@ -77,5 +79,25 @@ export async function getClientUser(): Promise<User | null> {
     return data.user;
   } catch {
     return null;
+  }
+}
+
+// 客户端登出函数
+export async function logoutUser(): Promise<boolean> {
+  try {
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (!response.ok) {
+      return false;
+    }
+    
+    return true;
+  } catch {
+    return false;
   }
 }
