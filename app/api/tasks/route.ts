@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { verifyToken } from '@/app/lib/auth';
 import { Prisma } from '@prisma/client';
+// 使用类型导入，确保不会在运行时导入
+// import type { Prisma } from '@prisma/client';
 
 // 获取任务列表
 export async function GET(request: NextRequest) {

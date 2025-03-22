@@ -1,6 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+// 直接从 .prisma/client 导入 PrismaClient
+import { PrismaClient } from '.prisma/client';
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
+const globalForPrisma = global as unknown as { prisma: any };
 
 export const prisma =
   globalForPrisma.prisma ||
