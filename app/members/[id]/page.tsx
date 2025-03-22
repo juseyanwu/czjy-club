@@ -29,7 +29,8 @@ interface UserDetail {
   }[];
 }
 
-export default function MemberDetailPage({ params }: { params: { id: string } }) {
+export default function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [userId, setUserId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<{id: string; name: string; email: string} | null>(null);
   const [member, setMember] = useState<UserDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,21 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   const [notification, setNotification] = useState('');
   
   const router = useRouter();
+
+  // 解析参数
+  useEffect(() => {
+    const resolveParams = async () => {
+      try {
+        const resolvedParams = await params;
+        setUserId(resolvedParams.id);
+      } catch (error) {
+        console.error('解析参数错误:', error);
+        setError('加载用户信息失败');
+      }
+    };
+    
+    resolveParams();
+  }, [params]);
 
   // 获取当前登录用户信息
   useEffect(() => {
@@ -63,11 +79,11 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
   // 获取成员详情
   useEffect(() => {
     const fetchMemberDetail = async () => {
-      if (!currentUser) return;
+      if (!currentUser || !userId) return;
       
       try {
         setLoading(true);
-        const response = await fetch(`/api/members/${params.id}`);
+        const response = await fetch(`/api/members/${userId}`);
         
         if (!response.ok) {
           const errorData = await response.json();
@@ -91,13 +107,15 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
       }
     };
 
-    if (currentUser) {
+    if (currentUser && userId) {
       fetchMemberDetail();
     }
-  }, [currentUser, params.id]);
+  }, [currentUser, userId]);
 
   // 处理编辑提交
   const handleEditSubmit = async () => {
+    if (!userId) return;
+    
     try {
       // 验证表单
       if (!editedMember.name || !editedMember.email) {
@@ -116,7 +134,7 @@ export default function MemberDetailPage({ params }: { params: { id: string } })
         updateData.password = editedMember.password;
       }
 
-      const response = await fetch(`/api/members/${params.id}`, {
+      const response = await fetch(`/api/members/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
