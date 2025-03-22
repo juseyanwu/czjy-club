@@ -47,10 +47,9 @@ export async function POST(request: Request) {
       role: user.role || 'user'
     });
     
-    // 设置cookie
-    (await
-      // 设置cookie
-      cookies()).set({
+    // 获取cookie存储并设置token
+    const cookieStore = await cookies();
+    cookieStore.set({
       name: 'token',
       value: token,
       httpOnly: true,

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect, Fragment, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -27,7 +27,9 @@ import Loading from '@/app/ui/loading';
 export default function TasksPage() {
   return (
     <DndProvider backend={HTML5Backend}>
-      <TasksContent />
+      <Suspense fallback={<Loading fullPage text="加载中..." />}>
+        <TasksContent />
+      </Suspense>
     </DndProvider>
   );
 }

@@ -3,8 +3,8 @@ import { cookies } from "next/headers";
 
 export async function POST() {
   try {
-    // 获取cookie存储对象
-    const cookieStore = cookies();
+    // 获取cookie存储对象并等待解析
+    const cookieStore = await cookies();
     
     // 清除token cookie
     cookieStore.delete('token');
