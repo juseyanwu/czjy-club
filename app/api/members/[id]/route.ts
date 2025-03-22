@@ -114,6 +114,7 @@ export async function PUT(
     });
 
     // 清除敏感信息
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password: _password, ...userWithoutPassword } = updatedUser;
 
     return NextResponse.json({

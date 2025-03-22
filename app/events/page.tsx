@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import Link from 'next/link';
@@ -8,16 +7,12 @@ import {
   PlusIcon, 
   MapPinIcon, 
   UserGroupIcon, 
-  FunnelIcon,
-  EllipsisHorizontalIcon,
   MagnifyingGlassIcon,
-  PhotoIcon,
   CheckIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { getClientUser } from '@/app/lib/auth';
-import { useRouter } from 'next/navigation';
 import Loading from '@/app/ui/loading';
 
 // 定义事件类型接口
@@ -43,8 +38,6 @@ export default function EventsPage() {
   const [currentUser, setCurrentUser] = useState<{id: string; name: string; email: string; role: string} | null>(null);
   const [notification, setNotification] = useState('');
   
-  const router = useRouter();
-
   // 检查用户登录和角色
   useEffect(() => {
     const fetchUser = async () => {
@@ -97,25 +90,6 @@ export default function EventsPage() {
     const status = getEventStatus(event.date);
     return status === activeTab && matchesSearch;
   });
-
-  // 随机生成报名人数（仅用于演示）
-  const getRandomSignups = (event: Event) => {
-    // 使用事件ID作为种子，确保同一事件每次显示相同的随机数
-    const seed = parseInt(event.id.substring(0, 8), 16);
-    const max = 30 + (seed % 100); // 最大人数在30-130之间
-    const current = Math.floor((seed % max) + 10); // 当前报名人数
-    return { current, max };
-  };
-
-  // 获取适合卡片背景的颜色
-  const getCardColor = (eventTitle: string): string => {
-    if (eventTitle.includes('摄影')) return 'bg-blue-500';
-    if (eventTitle.includes('音乐') || eventTitle.includes('音乐节')) return 'bg-yellow-500';
-    if (eventTitle.includes('篮球') || eventTitle.includes('友谊赛')) return 'bg-red-500';
-    if (eventTitle.includes('读书会') || eventTitle.includes('文学')) return 'bg-purple-500';
-    if (eventTitle.includes('环保') || eventTitle.includes('志愿者')) return 'bg-green-500';
-    return 'bg-gray-500'; // 默认颜色
-  };
 
   // 获取活动状态标签
   function getStatusLabel(status: string) {
