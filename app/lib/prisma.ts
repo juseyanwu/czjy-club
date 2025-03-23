@@ -1,5 +1,5 @@
-// @ts-ignore
-import { PrismaClient } from '@prisma/client';
+// 使用CommonJS方式导入Prisma客户端
+const { PrismaClient } = require('@prisma/client');
 
 // 全局变量类型定义
 const globalForPrisma = global as unknown as { prisma: any };

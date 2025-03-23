@@ -2,5 +2,5 @@
   "env": {
     "NEXT_SKIP_TYPE_CHECK": "1"
   },
-  "buildCommand": "npm run build -- --no-lint"
+  "buildCommand": "npx prisma generate && npm run build -- --no-lint"
 } 
