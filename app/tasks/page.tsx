@@ -137,9 +137,16 @@ function TasksContent() {
         body: JSON.stringify({ status: newStatus })
       });
       
+      if(response.status === 403){
+        setNotification('您没有权限更新此任务,只有被指派人或是任务创建者可以更新此任务');
+        setTimeout(() => setNotification(''), 3000);
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('更新任务状态失败');
       }
+
       
       // 更新本地状态
       setTasks(prevTasks => 

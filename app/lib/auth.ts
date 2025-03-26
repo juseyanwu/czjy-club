@@ -101,3 +101,12 @@ export async function logoutUser(): Promise<boolean> {
     return false;
   }
 }
+
+// 验证请求是否来自已认证用户（API路由使用）
+export async function requireAuth(req: NextRequest): Promise<User | null> {
+  const token = req.cookies.get("token")?.value;
+  if (!token) {
+    return null;
+  }
+  return verifyToken(token);
+}

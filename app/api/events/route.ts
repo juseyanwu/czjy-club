@@ -1,41 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { prisma } from '@/app/lib/prisma';
-import { verifyToken } from '@/app/lib/auth';
+import { requireAuth } from '@/app/lib/auth';
+import { put } from '@vercel/blob';
+
+// 定义创建活动的验证模式
+const eventSchema = z.object({
+  title: z.string().min(1, '活动标题不能为空'),
+  date: z.string().min(1, '活动日期不能为空'),
+  location: z.string().min(1, '活动地点不能为空'),
+  description: z.string().optional(),
+  image_url: z.string().optional(),
+});
 
 // 获取活动列表
 export async function GET() {
   try {
+    // 获取所有活动，按日期降序排列
     const events = await prisma.events.findMany({
+      orderBy: {
+        date: 'desc',
+      },
       include: {
         organizer: {
           select: {
-            name: true
-          }
-        }
+            id: true,
+            name: true,
+          },
+        },
+        registrations: {
+          select: {
+            id: true,
+            user_id: true,
+          },
+        },
       },
-      orderBy: {
-        date: 'desc'
-      }
     });
 
-    // 转换为前端所需格式
+    // 格式化响应数据
     const formattedEvents = events.map(event => ({
       id: event.id,
       title: event.title,
-      date: event.date.toISOString().split('T')[0],
+      date: event.date.toISOString(),
       location: event.location,
-      description: event.description || '',
-      image_url: event.image_url || '',
-      created_at: event.created_at ? event.created_at.toISOString() : '',
+      description: event.description,
+      image_url: event.image_url,
+      created_at: event.created_at.toISOString(),
+      organizer_id: event.organizer.id,
       organizer_name: event.organizer.name,
-      organizer_id: event.organizer_id || ''
+      registrations: event.registrations,
+      registration_count: event.registrations.length,
     }));
 
     return NextResponse.json({ events: formattedEvents });
   } catch (error) {
-    console.error('获取活动列表失败:', error);
+    console.error('获取活动失败:', error);
     return NextResponse.json(
-      { error: '服务器错误，请稍后再试' },
+      { error: '获取活动列表失败' },
       { status: 500 }
     );
   }
@@ -44,79 +65,105 @@ export async function GET() {
 // 创建新活动
 export async function POST(request: NextRequest) {
   try {
-    // 验证用户是否已登录
-    const token = request.cookies.get('token')?.value;
-    if (!token) {
+    // 验证用户身份和权限
+    const user = await requireAuth(request);
+    
+    if (!user) {
       return NextResponse.json(
-        { message: '请先登录' },
+        { error: '需要登录才能创建活动' },
         { status: 401 }
       );
     }
     
-    const currentUser = verifyToken(token);
-    if (!currentUser) {
+    if (user.role !== 'admin') {
       return NextResponse.json(
-        { message: '无效的登录凭证' },
-        { status: 401 }
-      );
-    }
-    
-    // 验证用户是否为管理员
-    if (currentUser.role !== 'admin') {
-      return NextResponse.json(
-        { message: '只有管理员可以创建活动' },
+        { error: '只有管理员可以创建活动' },
         { status: 403 }
       );
     }
-
+    
     // 解析请求体
-    const { title, date, location, description, image_url } = await request.json();
-
+    const formData = await request.formData();
+    
+    // 获取图片文件
+    const imageFile = formData.get('image') as File;
+    let imageUrl = '';
+    
+    // 如果有图片文件，上传到 Vercel Blob
+    if (imageFile) {
+      const blob = await put(imageFile.name, imageFile, {
+        access: 'public',
+      });
+      imageUrl = blob.url;
+    }
+    
+    // 获取其他表单数据
+    const title = formData.get('title') as string;
+    const date = formData.get('date') as string;
+    const location = formData.get('location') as string;
+    const description = formData.get('description') as string;
+    
     // 验证请求数据
-    if (!title || !date || !location) {
+    const validation = eventSchema.safeParse({
+      title,
+      date,
+      location,
+      description,
+      image_url: imageUrl,
+    });
+    
+    if (!validation.success) {
       return NextResponse.json(
-        { message: '请提供所有必填字段' },
+        { error: '表单数据验证失败', details: validation.error.format() },
         { status: 400 }
       );
     }
-
-    // 创建活动（使用当前管理员作为组织者）
-    const newEvent = await prisma.events.create({
+    
+    const { title: validatedTitle, date: validatedDate, location: validatedLocation, description: validatedDescription } = validation.data;
+    
+    // 创建新活动
+    const event = await prisma.events.create({
       data: {
-        title,
-        date: new Date(date),
-        location,
-        description,
-        image_url,
-        organizer_id: currentUser.id // 使用当前登录的管理员ID
+        title: validatedTitle,
+        date: new Date(validatedDate),
+        location: validatedLocation,
+        description: validatedDescription || '',
+        image_url: imageUrl || '',
+        organizer_id: user.id,
       },
       include: {
         organizer: {
           select: {
-            name: true
-          }
-        }
-      }
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
-
+    
     // 格式化响应数据
     const formattedEvent = {
-      ...newEvent,
-      date: newEvent.date.toISOString().split('T')[0],
-      created_at: newEvent.created_at ? newEvent.created_at.toISOString() : null,
-      organizer_name: newEvent.organizer.name
+      id: event.id,
+      title: event.title,
+      date: event.date.toISOString(),
+      location: event.location,
+      description: event.description,
+      image_url: event.image_url,
+      created_at: event.created_at.toISOString(),
+      organizer_id: event.organizer.id,
+      organizer_name: event.organizer.name,
+      registrations: [],
+      registration_count: 0,
     };
-
-    // 返回成功响应
-    return NextResponse.json({
+    
+    return NextResponse.json({ 
       message: '活动创建成功',
-      event: formattedEvent
+      event: formattedEvent 
     }, { status: 201 });
-
   } catch (error) {
-    console.error('创建活动错误:', error);
+    console.error('创建活动失败:', error);
     return NextResponse.json(
-      { message: '服务器错误，请稍后再试' },
+      { error: '创建活动失败，请稍后再试' },
       { status: 500 }
     );
   }

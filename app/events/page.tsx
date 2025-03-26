@@ -147,22 +147,45 @@ export default function EventsPage() {
         }
         const data = await response.json();
         
+        if (!data.events || !Array.isArray(data.events)) {
+          console.error('API返回的数据格式不正确:', data);
+          throw new Error('获取活动数据格式不正确');
+        }
+        
         // 确保数据符合本页面的Event接口
-        const formattedEvents: Event[] = data.events.map((event: Record<string, unknown>) => ({
-          ...event,
-          is_registered: false,
-          registration_count: 0
-        }));
+        const formattedEvents: Event[] = data.events.map((event: any) => {
+          // 检查注册状态
+          const isRegistered = currentUser && 
+            Array.isArray(event.registrations) && 
+            event.registrations.some((reg: any) => reg.user_id === currentUser.id);
+            
+          return {
+            id: event.id,
+            title: event.title,
+            date: event.date,
+            location: event.location,
+            description: event.description || '',
+            image_url: event.image_url || '',
+            created_at: event.created_at,
+            organizer_id: event.organizer_id,
+            organizer_name: event.organizer_name,
+            is_registered: isRegistered,
+            registration_count: Array.isArray(event.registrations) ? event.registrations.length : 0
+          };
+        });
+        
         setEvents(formattedEvents);
       } catch (error) {
         console.error('获取活动失败:', error);
+        // 设置空数组确保UI不会崩溃
+        setEvents([]);
       } finally {
         setLoading(false);
       }
     };
     
     loadEvents();
-  }, []);
+  }, [currentUser]);
 
   // 加载中状态
   if (loading) {
@@ -247,48 +270,45 @@ export default function EventsPage() {
 
   return (
     <div className="p-6">
-      {/* 顶部标题区域 */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <h1 className={`${lusitana.className} text-2xl font-bold`}>活动管理</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <h1 className={`${lusitana.className} text-2xl font-bold mb-4 md:mb-0`}>活动列表</h1>
         
-        {/* 只有管理员可以创建活动 */}
+        {/* 管理员创建活动按钮 */}
         {currentUser?.role === 'admin' && (
-          <Link
+          <Link 
             href="/events/create"
-            className="flex items-center gap-1 self-start rounded-lg bg-blue-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-500 md:self-auto"
+            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md shadow hover:bg-blue-700 transition-colors"
           >
-            <PlusIcon className="w-5" />
-            <span>创建活动</span>
+            <PlusIcon className="h-5 w-5 mr-2" />
+            创建新活动
           </Link>
         )}
       </div>
-      
+
       {/* 通知消息 */}
       {notification && (
-        <div className="mb-4 p-4 bg-blue-50 text-blue-700 rounded-md flex items-center justify-between">
-          <span>{notification}</span>
-          <button onClick={() => setNotification('')}>
-            <XMarkIcon className="w-5 h-5" />
-          </button>
+        <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-6 rounded">
+          <p>{notification}</p>
         </div>
       )}
-      
-      {/* 搜索和筛选区域 */}
-      <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
-        {/* 搜索框 */}
-        <div className="relative w-full md:w-96">
+
+      <div className="flex flex-col md:flex-row mb-6 space-y-4 md:space-y-0 md:items-center">
+        {/* 搜索栏 */}
+        <div className="relative flex-grow max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+          </div>
           <input
             type="text"
-            placeholder="搜索活动名称、地点或组织者"
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg"
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="搜索活动..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <MagnifyingGlassIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
         </div>
-        
-        {/* 选项卡 */}
-        <div className="flex items-center space-x-2 overflow-x-auto p-1 w-full">
+
+        {/* 标签 */}
+        <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
           {tabs.map((tab) => (
             <button
               key={tab}
@@ -303,13 +323,13 @@ export default function EventsPage() {
             </button>
           ))}
         </div>
-        </div>
+      </div>
 
-        {/* 活动列表 */}
+      {/* 活动列表 */}
       {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-          </div>
+        </div>
       ) : filteredEvents.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredEvents.map((event) => {
@@ -404,9 +424,9 @@ export default function EventsPage() {
       ) : (
         <div className="bg-white p-8 text-center rounded-lg shadow">
           <p className="text-gray-500">没有找到匹配的活动</p>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
   );
   
   // 辅助函数：格式化日期

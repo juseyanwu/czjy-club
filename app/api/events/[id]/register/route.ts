@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
-import { verifyToken } from '@/app/lib/auth';
+import { requireAuth } from '@/app/lib/auth';
 
 // 用户报名参加活动
 export async function POST(
@@ -8,36 +8,35 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 验证用户是否已登录
-    const token = request.cookies.get('token')?.value;
-    if (!token) {
-      return NextResponse.json(
-        { error: '请先登录' },
-        { status: 401 }
-      );
-    }
+    const { id: eventId } = await params;
     
-    const currentUser = verifyToken(token);
-    if (!currentUser) {
+    // 验证用户身份
+    const user = await requireAuth(request);
+    
+    if (!user) {
       return NextResponse.json(
-        { error: '无效的登录凭证' },
+        { error: '需要登录才能报名参加活动' },
         { status: 401 }
       );
     }
-
-    // 解析参数
-    const resolvedParams = await params;
-    const eventId = resolvedParams.id;
     
     // 检查活动是否存在
     const event = await prisma.events.findUnique({
-      where: { id: eventId }
+      where: { id: eventId },
     });
     
     if (!event) {
       return NextResponse.json(
-        { error: '活动不存在' },
+        { error: '未找到该活动' },
         { status: 404 }
+      );
+    }
+    
+    // 检查活动是否已结束
+    if (event.date < new Date()) {
+      return NextResponse.json(
+        { error: '活动已结束，无法报名' },
+        { status: 400 }
       );
     }
     
@@ -46,36 +45,41 @@ export async function POST(
       where: {
         event_id_user_id: {
           event_id: eventId,
-          user_id: currentUser.id
-        }
-      }
+          user_id: user.id,
+        },
+      },
     });
     
     if (existingRegistration) {
       return NextResponse.json(
-        { error: '您已经报名参加了此活动' },
+        { error: '您已经报名参加此活动' },
         { status: 400 }
       );
     }
     
-    // 创建报名记录
+    // 创建新的报名记录
     const registration = await prisma.event_registrations.create({
       data: {
+        user_id: user.id,
         event_id: eventId,
-        user_id: currentUser.id,
         status: 'registered'
-      }
+      },
     });
     
     return NextResponse.json({
       message: '报名成功',
-      registration
-    });
-    
+      registration: {
+        id: registration.id,
+        user_id: registration.user_id,
+        event_id: registration.event_id,
+        status: registration.status,
+        created_at: registration.created_at.toISOString(),
+      },
+    }, { status: 201 });
   } catch (error) {
     console.error('活动报名失败:', error);
     return NextResponse.json(
-      { error: '活动报名失败' },
+      { error: '报名失败，请稍后再试' },
       { status: 500 }
     );
   }
@@ -87,41 +91,44 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 验证用户是否已登录
-    const token = request.cookies.get('token')?.value;
-    if (!token) {
+    const { id: eventId } = await params;
+    
+    // 验证用户身份
+    const user = await requireAuth(request);
+    
+    if (!user) {
       return NextResponse.json(
-        { error: '请先登录' },
+        { error: '需要登录才能取消报名' },
         { status: 401 }
       );
     }
     
-    const currentUser = verifyToken(token);
-    if (!currentUser) {
+    // 检查活动是否存在
+    const event = await prisma.events.findUnique({
+      where: { id: eventId },
+    });
+    
+    if (!event) {
       return NextResponse.json(
-        { error: '无效的登录凭证' },
-        { status: 401 }
+        { error: '未找到该活动' },
+        { status: 404 }
       );
     }
     
-    // 解析参数
-    const resolvedParams = await params;
-    const eventId = resolvedParams.id;
-    
-    // 检查报名记录是否存在
-    const registration = await prisma.event_registrations.findUnique({
+    // 检查用户是否已报名
+    const existingRegistration = await prisma.event_registrations.findUnique({
       where: {
         event_id_user_id: {
           event_id: eventId,
-          user_id: currentUser.id
-        }
-      }
+          user_id: user.id,
+        },
+      },
     });
     
-    if (!registration) {
+    if (!existingRegistration) {
       return NextResponse.json(
         { error: '您尚未报名参加此活动' },
-        { status: 404 }
+        { status: 400 }
       );
     }
     
@@ -130,19 +137,18 @@ export async function DELETE(
       where: {
         event_id_user_id: {
           event_id: eventId,
-          user_id: currentUser.id
-        }
-      }
+          user_id: user.id,
+        },
+      },
     });
     
     return NextResponse.json({
-      message: '取消报名成功'
+      message: '已成功取消报名',
     });
-    
   } catch (error) {
     console.error('取消报名失败:', error);
     return NextResponse.json(
-      { error: '取消报名失败' },
+      { error: '取消报名失败，请稍后再试' },
       { status: 500 }
     );
   }
