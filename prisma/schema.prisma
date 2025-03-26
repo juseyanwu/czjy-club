@@ -59,6 +59,39 @@ model task_logs {
   user       users       @relation(fields: [user_id], references: [id])
 }
 
+model posts {
+  id         String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  content    String
+  image_urls String[]
+  author_id  String          @db.Uuid
+  created_at DateTime        @default(now()) @db.Timestamptz(6)
+  updated_at DateTime        @updatedAt @db.Timestamptz(6)
+  likes      post_likes[]
+  comments   post_comments[]
+  author     users           @relation(fields: [author_id], references: [id])
+}
+
+model post_likes {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  post       posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user       users    @relation(fields: [user_id], references: [id])
+
+  @@unique([post_id, user_id])
+}
+
+model post_comments {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  post_id    String   @db.Uuid
+  user_id    String   @db.Uuid
+  content    String
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+  post       posts    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  user       users    @relation(fields: [user_id], references: [id])
+}
+
 model users {
   id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
   name           String                @db.VarChar(255)
@@ -71,6 +104,9 @@ model users {
   task_logs      task_logs[]
   assigned_tasks tasks[]               @relation("TaskAssignee")
   created_tasks  tasks[]               @relation("TaskCreator")
+  posts          posts[]
+  post_likes     post_likes[]
+  post_comments  post_comments[]
 }
 
 model event_registrations {

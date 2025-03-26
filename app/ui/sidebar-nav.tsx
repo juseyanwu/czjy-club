@@ -12,7 +12,8 @@ import {
   LockClosedIcon,
   BuildingLibraryIcon,
   ClipboardDocumentListIcon,
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  ChatBubbleOvalLeftEllipsisIcon
 } from '@heroicons/react/24/outline';
 import { lusitana } from '@/app/ui/fonts';
 import { logoutUser } from '@/app/lib/auth';
@@ -24,8 +25,9 @@ const links = [
   { name: '成员管理', href: '/members', icon: UsersIcon },
   { name: '活动管理', href: '/events', icon: CalendarIcon },
   { name: '任务管理', href: '/tasks', icon: ClipboardDocumentListIcon },
+  { name: '社团说说', href: '/posts', icon: ChatBubbleLeftRightIcon },
   { name: '数据分析', href: '/analytics', icon: ChartBarIcon },
-  { name: '在线沟通', href: '/communication', icon: ChatBubbleLeftRightIcon },
+  { name: '在线沟通', href: '/communication', icon: ChatBubbleOvalLeftEllipsisIcon },
   { name: '智能推荐', href: '/recommendations', icon: SparklesIcon },
   { name: '权限设置', href: '/settings', icon: LockClosedIcon },
 ];
