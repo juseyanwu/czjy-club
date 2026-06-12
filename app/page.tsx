@@ -128,7 +128,7 @@ export default function Page() {
             className="rounded-2xl" // 添加圆角样式
           />
         </div>
-        <script src="https://plugin-code.salesmartly.com/js/project_620476_640228_1770030117.js"></script>
+        <script src="https://plugin-code.salesmartly.com/js/project_622195_767541_1781089001.js"></script>
       </div>
     </main>
   );
